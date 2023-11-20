@@ -900,6 +900,24 @@ input AddressInput {
   country: CCA3!
 }
 
+input AddSepaDirectDebitPaymentMandateFromPaymentLinkInput {
+  """Debtor of the SEPA Direct Debit Payment Mandate"""
+  debtor: SepaPaymentMandateDebtorInput!
+
+  """Payment Link related to the SEPA Direct Debit Payment Mandate"""
+  paymentLinkId: ID!
+}
+
+"""Union type return by the addSepaDirectDebitPaymentMandate mutation"""
+union AddSepaDirectDebitPaymentMandateFromPaymentLinkPayload = AddSepaDirectDebitPaymentMandateFromPaymentLinkSuccessPayload | ForbiddenRejection | NotFoundRejection | DebtorAccountNotAllowedRejection | DebtorAccountClosedRejection | SchemeWrongRejection | PaymentMandateReferenceAlreadyUsedRejection | ValidationRejection | PaymentMethodNotCompatibleRejection | InternalErrorRejection
+
+"""
+Return type in case of a successful response of the addSepaDirectDebitPaymentMandateFromPaymentLink mutation
+"""
+type AddSepaDirectDebitPaymentMandateFromPaymentLinkSuccessPayload {
+  paymentMandate: SEPAPaymentDirectDebitMandate!
+}
+
 """Rejection returned if card already has a valid Physical Card"""
 type AlreadyValidPhysicalCardRejection implements Rejection {
   message: String!
@@ -1303,6 +1321,33 @@ input CardInfosInput {
   requestId: String
 }
 
+type CardMerchantPaymentMethod implements MerchantPaymentMethod {
+  """
+  Unique identifier tied to every version of a given Merchant Payment Method
+  """
+  id: ID!
+
+  """The Merchant Payment Method Type"""
+  type: MerchantPaymentMethodType!
+
+  """
+  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
+  """
+  methodId: ID!
+
+  """Status of the Merchant Payment Method"""
+  statusInfo: MerchantPaymentMethodStatusInfo!
+
+  """Version of the Merchant Payment Method"""
+  version: Int!
+
+  """Date at which the Merchant Payment Method was last updated"""
+  updatedAt: Date!
+
+  """Rolling Reserve applied to the Merchant Payment Method"""
+  rollingReserve: RollingReserve
+}
+
 """
 Rejection returned if the card was not found or if the user does not have the rights to know that the account exists
 """
@@ -1613,12 +1658,6 @@ type CheckMerchantPaymentMethod implements MerchantPaymentMethod {
 
   """The Merchant Payment Method Type"""
   type: MerchantPaymentMethodType!
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
@@ -2263,6 +2302,11 @@ enum DigitalizationType {
   Unknown
 }
 
+enum DirectDebitSequence {
+  OneOff
+  Recurring
+}
+
 """EnabledMerchantPaymentMethodStatusInfo"""
 type DisabledMerchantPaymentMethodStatusInfo implements MerchantPaymentMethodStatusInfo {
   status: MerchantPaymentMethodStatus!
@@ -2784,12 +2828,6 @@ type InternalDirectDebitB2BMerchantPaymentMethod implements MerchantPaymentMetho
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
   """
   methodId: ID!
 
@@ -2815,12 +2853,6 @@ type InternalDirectDebitStandardMerchantPaymentMethod implements MerchantPayment
 
   """The Merchant Payment Method Type"""
   type: MerchantPaymentMethodType!
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
@@ -2958,8 +2990,13 @@ type MerchantPaymentLink {
   """
   sequence: PaymentLinkSequenceType!
 
-  """billing address informations"""
-  billingAddress: Address!
+  """
+  The customer billing Address
+  These fields should be completed also to pre-fill a SEPA direct debit mandate.
+  
+  We strongly advice to complete these fields if merchants want to get paid through card payment method, in order to minimize the risk of payment rejection by Visa / Mastercard schemes
+  """
+  billingAddress: Address
 
   """
     A date that reflects the time at which the user asked the transaction to be executed.
@@ -3082,6 +3119,7 @@ enum MerchantPaymentMethodType {
   SepaDirectDebitCore
   SepaDirectDebitB2b
   Check
+  Card
 }
 
 """Merchant Profile"""
@@ -3205,6 +3243,7 @@ type Mutation {
   *This mutation is restricted to a Project access token ([Learn More](https://docs.swan.io/api/authentication))*
   """
   generateSupportingDocumentUploadUrl(input: GenerateSupportingDocumentUploadUrlInput!): GenerateSupportingDocumentUploadUrlPayload!
+  addSepaDirectDebitPaymentMandateFromPaymentLink(input: AddSepaDirectDebitPaymentMandateFromPaymentLinkInput!): AddSepaDirectDebitPaymentMandateFromPaymentLinkPayload
 }
 
 """
@@ -3688,6 +3727,11 @@ enum PaymentAccountType {
   PaymentService
 }
 
+interface PaymentDirectDebitMandate {
+  """Unique identifier of the Direct Debit Payment Mandate"""
+  id: ID!
+}
+
 """Payment Level of the account"""
 enum PaymentLevel {
   """When the account is limited to 150€ within 30 days and with no IBAN"""
@@ -3704,11 +3748,137 @@ enum PaymentLinkSequenceType {
   Recurring
 }
 
+interface PaymentMandate {
+  """Unique identifier of the Payment Mandate"""
+  id: ID!
+}
+
+enum PaymentMandateCanceledReason {
+  """When the user requested to cancel the Payment Mandate"""
+  RequestedByUser
+
+  """When the Payment Mandate is expired"""
+  MandateExpired
+}
+
+"""Payment Mandate Canceled status information"""
+type PaymentMandateCanceledStatusInfo implements PaymentMandateStatusInfo {
+  """
+  Payment Mandate status (always Canceled for type PaymentMandateCanceledStatusInfo).
+  """
+  status: PaymentMandateStatus!
+
+  """Reason behind the Payment Mandate Canceled status"""
+  reason: PaymentMandateCanceledReason!
+}
+
+"""
+Implements the Relay Connection interface, used to paginate list of element ([Learn More](https://docs.swan.io/api/pagination))
+"""
+type PaymentMandateConnection implements Connection {
+  """Total number of elements in the list"""
+  totalCount: Int!
+
+  """Information about the current, the previous and the next page"""
+  pageInfo: PageInfo!
+
+  """PaymentMandateEdge list"""
+  edges: [PaymentMandateEdge!]!
+}
+
+"""Payment Mandate Consent Pending status information"""
+type PaymentMandateConsentPendingStatusInfo implements PaymentMandateStatusInfo {
+  """
+  Payment Mandate status (always Enabled for type PaymentMandateEnableedStatusInfo).
+  """
+  status: PaymentMandateStatus!
+
+  """Consent information required to enable the concerned Payment Mandate"""
+  consent: Consent!
+}
+
+interface PaymentMandateCreditor {
+  """Creditor UUID"""
+  id: ID!
+
+  """Creditor name"""
+  name: String!
+
+  """Creditor address"""
+  address: Address!
+}
+
+interface PaymentMandateDebtor {
+  """Debtor name"""
+  name: String!
+
+  """Debtor e-mail"""
+  email: String
+
+  """Debtor country"""
+  country: CCA3!
+}
+
+"""Implements the Relay Edge interface"""
+type PaymentMandateEdge implements Edge {
+  """
+  Opaque identifier pointing to this onboarding node in the pagination mechanism
+  """
+  cursor: String!
+
+  """The payment mandate"""
+  node: PaymentMandate!
+}
+
+"""Payment Mandate Enabled status information"""
+type PaymentMandateEnabledStatusInfo implements PaymentMandateStatusInfo {
+  """
+  Payment Mandate status (always Enabled for type PaymentMandateEnabledStatusInfo).
+  """
+  status: PaymentMandateStatus!
+}
+
 """
 Rejection returned when a payment mandate reference is already for a creditor
 """
 type PaymentMandateReferenceAlreadyUsedRejection implements Rejection {
   message: String!
+}
+
+"""Payment Mandate Rejected status information"""
+type PaymentMandateRejectedStatusInfo implements PaymentMandateStatusInfo {
+  """
+  Payment Mandate status (always Rejected for type PaymentMandateSuspendedStatusInfo).
+  """
+  status: PaymentMandateStatus!
+}
+
+enum PaymentMandateScheme {
+  """SEPA Direct Debit Core"""
+  SepaDirectDebitCore
+
+  """SEPA Direct Debit B2B"""
+  SepaDirectDebitB2b
+
+  """Internal Direct Debit Standard"""
+  InternalDirectDebitStandard
+
+  """Internal Direct Debit B2B"""
+  InternalDirectDebitB2b
+}
+
+"""Payment Mandate status"""
+enum PaymentMandateStatus {
+  ConsentPending
+  Enabled
+  Rejected
+  Canceled
+}
+
+"""Payment Mandate status information"""
+interface PaymentMandateStatusInfo {
+  """Status of the payment mandate."""
+  status: PaymentMandateStatus!
 }
 
 """
@@ -4380,12 +4550,6 @@ type SepaDirectDebitB2BMerchantPaymentMethod implements MerchantPaymentMethod {
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
   """
   methodId: ID!
 
@@ -4422,12 +4586,6 @@ type SepaDirectDebitCoreMerchantPaymentMethod implements MerchantPaymentMethod {
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
   """
   methodId: ID!
 
@@ -4450,6 +4608,23 @@ type SepaDirectDebitCoreMerchantPaymentMethod implements MerchantPaymentMethod {
   When the above is false, the value of the Sepa Creditor Identifier used
   """
   sepaCreditorIdentifier: String
+}
+
+type SEPAPaymentDirectDebitMandate {
+  """Unique identifier of the SEPA Direct Debit Payment Mandate"""
+  id: ID!
+
+  """SEPA Direct Debit Payment Mandate PDF document URL"""
+  mandateDocumentUrl: String!
+}
+
+input SepaPaymentMandateDebtorInput {
+  """SEPA Direct Debit Payment Mandate debtor name"""
+  name: String!
+
+  """SEPA Direct Debit Payment Mandate debtor IBAN"""
+  IBAN: String!
+  address: AddressInput!
 }
 
 """

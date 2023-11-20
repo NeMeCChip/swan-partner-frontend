@@ -3287,12 +3287,6 @@ type CheckMerchantPaymentMethod implements MerchantPaymentMethod {
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
   """
   methodId: ID!
 
@@ -3919,8 +3913,13 @@ input CreateMerchantPaymentLinkInput {
   """URL to redirect the user to if they cancel their payment"""
   cancelRedirectUrl: URL!
 
-  """billing address information"""
-  billingAddress: AddressInput!
+  """
+  The customer billing Address
+  These fields should be completed also to pre-fill a SEPA direct debit mandate.
+  
+  We strongly advice to complete these fields if merchants want to get paid through card payment method, in order to minimize the risk of payment rejection by Visa / Mastercard schemes
+  """
+  billingAddress: AddressInput
 
   """
   The date when the payment link expires.
@@ -5563,6 +5562,9 @@ type IdentificationExpertProcessInfo {
   Using an alias to map this property is mandatory when querying multiple processes.
   """
   provider: IdentificationExpertProcessProvider!
+
+  """The global status of the identification process"""
+  status: SwanIdentificationStatus!
 }
 
 """The provider used for this expert-level identification process"""
@@ -5580,6 +5582,9 @@ type IdentificationExpertWithQESProcessInfo {
   Using an alias to map this property is mandatory when querying multiple processes.
   """
   provider: IdentificationExpertWithQESProcessProvider!
+
+  """The global status of the identification process"""
+  status: SwanIdentificationStatus!
 }
 
 """The provider used for this QES-level identification process"""
@@ -5779,6 +5784,9 @@ type IdentificationPVIDProcessInfo {
   Using an alias to map this property is mandatory when querying multiple processes.
   """
   provider: IdentificationPVIDProcessProvider!
+
+  """The global status of the identification process"""
+  status: SwanIdentificationStatus!
 }
 
 """The provider used for this PVID-level identification process"""
@@ -6127,6 +6135,9 @@ input InitiateInternationalCreditTransferInput {
 
   """External reference"""
   externalReference: String
+
+  """Language used to output errors"""
+  language: InternationalCreditTransferDisplayLanguage
 }
 
 """Initiate International Credit Transfer Response Payload"""
@@ -6372,12 +6383,6 @@ type InternalDirectDebitB2BMerchantPaymentMethod implements MerchantPaymentMetho
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
   """
   methodId: ID!
 
@@ -6440,12 +6445,6 @@ type InternalDirectDebitStandardMerchantPaymentMethod implements MerchantPayment
 
   """The Merchant Payment Method Type"""
   type: MerchantPaymentMethodType!
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
@@ -8013,7 +8012,12 @@ type MerchantPaymentLink {
   """
   sequence: PaymentLinkSequenceType!
 
-  """billing address informations"""
+  """
+  The customer billing Address
+  These fields should be completed also to pre-fill a SEPA direct debit mandate.
+  
+  We strongly advice to complete these fields if merchants want to get paid through card payment method, in order to minimize the risk of payment rejection by Visa / Mastercard schemes
+  """
   billingAddress: Address
 
   """
@@ -10620,7 +10624,7 @@ type Query {
   internationalCreditTransferTransactionDetailsDynamicForm(targetAmount: AmountInput!, language: InternationalCreditTransferDisplayLanguage, internationalBeneficiary: InternationalBeneficiaryInput!, refreshableFields: [InternationalCreditTransferDetailsInput!]): InternationalCreditTransferDynamicForm
 
   """Request an international credit transfer quote."""
-  internationalCreditTransferQuote(accountId: ID!, targetAmount: AmountInput!): InternationalCreditTransferQuote
+  internationalCreditTransferQuote(accountId: ID!, targetAmount: AmountInput!, language: InternationalCreditTransferDisplayLanguage): InternationalCreditTransferQuote
 
   """Returns standing order from its id."""
   standingOrder(standingOrderId: ID!): StandingOrder
@@ -11233,6 +11237,9 @@ input RequestMerchantPaymentMethodsInput {
 
   """Input for Check payment method"""
   check: CheckPaymentMethodInput
+
+  """input for Card payment method"""
+  card: CardPaymentMethodInput
 }
 
 union RequestMerchantPaymentMethodsPayload = RequestMerchantPaymentMethodsSuccessPayload | ForbiddenRejection | NotFoundRejection | InternalErrorRejection | ValidationRejection
@@ -11872,12 +11879,6 @@ type SepaDirectDebitB2BMerchantPaymentMethod implements MerchantPaymentMethod {
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
   """
   methodId: ID!
 
@@ -11926,12 +11927,6 @@ type SepaDirectDebitCoreMerchantPaymentMethod implements MerchantPaymentMethod {
 
   """The Merchant Payment Method Type"""
   type: MerchantPaymentMethodType!
-
-  """
-  Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
-  DEPRECATED use the methodId field instead.
-  """
-  productId: ID! @deprecated(reason: "Use methodId instead")
 
   """
   Unique identifier for a given merchant Payment Method, identical for every version of a given Merchant Payment Method Type
