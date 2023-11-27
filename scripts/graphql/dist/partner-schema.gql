@@ -2353,7 +2353,10 @@ type CapitalDepositDocument {
   uploadedAt: Date
 
   """Status of the document."""
-  status: CapitalDepositDocumentStatus!
+  status: CapitalDepositDocumentStatus! @deprecated(reason: "use statusInfo.status")
+
+  """Status info of the document."""
+  statusInfo: CapitalDepositDocumentStatusInfo!
 
   """Created date"""
   createdAt: DateTime!
@@ -2376,6 +2379,21 @@ type CapitalDepositDocumentCanNotBeUploaded implements Rejection {
   message: String!
 }
 
+"""Capital Deposit Document with Pending status"""
+type CapitalDepositDocumentPendingStatusInfo implements CapitalDepositDocumentStatusInfo {
+  """Pending"""
+  status: CapitalDepositDocumentStatus!
+}
+
+"""Capital Deposit Document with Refused status"""
+type CapitalDepositDocumentRefusedStatusInfo implements CapitalDepositDocumentStatusInfo {
+  """Refused"""
+  status: CapitalDepositDocumentStatus!
+
+  """Reason for the rejection."""
+  reasonCode: DocumentReasonCode!
+}
+
 """Status of the Capital Deposit Case"""
 enum CapitalDepositDocumentStatus {
   """Document is not uploaded yet."""
@@ -2389,6 +2407,12 @@ enum CapitalDepositDocumentStatus {
 
   """Document has been refused by Swan, it must be uploaded again."""
   Refused
+}
+
+"""Status info of the document."""
+interface CapitalDepositDocumentStatusInfo {
+  """Status of the document."""
+  status: CapitalDepositDocumentStatus!
 }
 
 """Type of the document."""
@@ -2424,6 +2448,18 @@ enum CapitalDepositDocumentType {
 
   """Signed power of attorney document to give the power to act on behalf."""
   PowerOfAttorney
+}
+
+"""Capital Deposit Document with Uploaded status"""
+type CapitalDepositDocumentUploadedStatusInfo implements CapitalDepositDocumentStatusInfo {
+  """Uploaded"""
+  status: CapitalDepositDocumentStatus!
+}
+
+"""Capital Deposit Document with Validated status"""
+type CapitalDepositDocumentValidatedStatusInfo implements CapitalDepositDocumentStatusInfo {
+  """Validated"""
+  status: CapitalDepositDocumentStatus!
 }
 
 """Card"""
@@ -4436,6 +4472,41 @@ enum DocumentFileSide {
   Unknown
 }
 
+"""Reason code of the document."""
+enum DocumentReasonCode {
+  """Company name in document doesn’t match our records"""
+  CompanyNameMismatch
+
+  """Declared amount in document doesn’t match the amount received"""
+  DeclaredAmountMismatch
+
+  """Document must be dated less than 3 months ago"""
+  ExpiredDocument
+
+  """Address in document doesn’t match our records"""
+  InvalidAddress
+
+  """Default value when none of the other values is appropriate"""
+  InvalidDocument
+
+  """Name of shareholder is not clearly visible or is missing"""
+  InvalidOrMissingData
+
+  """Missing identity document of accommodation provider"""
+  MissingAccommodationProviderId
+
+  """
+  Missing identity document and proof of accommodation from accommodation provider
+  """
+  MissingAccommodationProviderIdLetter
+
+  """Missing proof of accommodation from accommodation provider"""
+  MissingAccommodationProviderLetter
+
+  """Document can’t be accepted as a proof of address"""
+  UnacceptableDocument
+}
+
 """The type of the document"""
 enum DocumentType {
   IdCard
@@ -5510,8 +5581,11 @@ type Identification {
   """Last update date of the identification"""
   updatedAt: DateTime!
 
+  """The global status of the identification"""
+  status: SwanIdentificationStatus!
+
   """The process that was used for this identification"""
-  process: IdentificationProcessInfo!
+  process: IdentificationProcess!
 
   """
   The status and results associated to the available identification processes
@@ -5553,43 +5627,6 @@ type IdentificationEdge implements Edge {
 
   """Opaque identifier pointing to this node in the pagination mechanism"""
   cursor: String!
-}
-
-"""The identification process associated to the expert level"""
-type IdentificationExpertProcessInfo {
-  """
-  The identification process associated to the expert level.
-  Using an alias to map this property is mandatory when querying multiple processes.
-  """
-  provider: IdentificationExpertProcessProvider!
-
-  """The global status of the identification process"""
-  status: SwanIdentificationStatus!
-}
-
-"""The provider used for this expert-level identification process"""
-enum IdentificationExpertProcessProvider {
-  Fourthline
-  Ubble
-}
-
-"""
-The identification process associated to the Qualified Electronic Signature level
-"""
-type IdentificationExpertWithQESProcessInfo {
-  """
-  The identification process associated to the qes level.
-  Using an alias to map this property is mandatory when querying multiple processes.
-  """
-  provider: IdentificationExpertWithQESProcessProvider!
-
-  """The global status of the identification process"""
-  status: SwanIdentificationStatus!
-}
-
-"""The provider used for this QES-level identification process"""
-enum IdentificationExpertWithQESProcessProvider {
-  Fourthline
 }
 
 """
@@ -5770,28 +5807,6 @@ enum IdentificationProcess {
   Identity verified by an expert with a Remote Identity Verification Service
   """
   PVID
-}
-
-"""Union representing the process that was used for this identification"""
-union IdentificationProcessInfo = IdentificationExpertProcessInfo | IdentificationExpertWithQESProcessInfo | IdentificationPVIDProcessInfo
-
-"""
-The identification process associated to the PVID/Remote Identity Verification Service level
-"""
-type IdentificationPVIDProcessInfo {
-  """
-  The identification process associated to the pvid level.
-  Using an alias to map this property is mandatory when querying multiple processes.
-  """
-  provider: IdentificationPVIDProcessProvider!
-
-  """The global status of the identification process"""
-  status: SwanIdentificationStatus!
-}
-
-"""The provider used for this PVID-level identification process"""
-enum IdentificationPVIDProcessProvider {
-  Ubble
 }
 
 """
@@ -10339,10 +10354,10 @@ type ProjectInfo {
     this consists of a 2-3 letter base language tag representing the language, optionally followed by additional subtags separated by '-'. The most common extra information is the country or region variant (like 'en-US' or 'fr-CA') or the type of alphabet to use (like 'sr-Latn'). Other variants like the type of orthography ('de-DE-1996') are usually not used in the context of this header. [Learn More](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Language)
     """
     language: String!
-  ): String! @deprecated(reason: "use tcuDocumentUrl from the onboarding query")
+  ): String!
 
   """Unique id of your current Terms and Conditions of Use"""
-  tcuDocumentId: String! @deprecated(reason: "use tcuDocumentUrl from the onboarding query")
+  tcuDocumentId: String!
 
   """Web banking settings"""
   webBankingSettings: WebBankingSettings
@@ -11550,6 +11565,11 @@ type SchemeWrongRejection implements Rejection {
   message: String!
 }
 
+type ScreeningNotFoundRejection implements Rejection {
+  id: ID!
+  message: String!
+}
+
 type SelectField implements Field {
   key: String!
   name: String!
@@ -12572,10 +12592,6 @@ enum ShareholderType {
   Company
 }
 
-type Signature {
-  status: SignatureStatus!
-}
-
 """Signature data used during apple pay inApp provisioning"""
 input SignatureData {
   """nonce"""
@@ -12586,16 +12602,6 @@ input SignatureData {
 
   """list of apple generated certificates"""
   certificates: [Certificate!]!
-}
-
-enum SignatureStatus {
-  Signed
-  Created
-  Processing
-  PendingVerification
-  Invalid
-  Failed
-  Canceled
 }
 
 enum SimulationCardType {
