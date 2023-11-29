@@ -5652,7 +5652,7 @@ enum IdentificationInvalidReason {
   AlteredDevice
 
   """Light on actual document is insufficient"""
-  BadDocumentLightning
+  BadDocumentLighting
 
   """
   Something about the document is damaged (could be as tiny as a bent corner)
@@ -5671,7 +5671,7 @@ enum IdentificationInvalidReason {
   InadequateVideo
 
   """Lighting on applicant’s face is insufficient"""
-  InsufficientApplicantLightning
+  InsufficientApplicantLighting
 
   """Applicant isn’t meeting movement requirements"""
   InsufficientApplicantLiveness
@@ -10321,7 +10321,6 @@ type ProjectInfo {
   """Unique identifier of the project"""
   id: ID!
   B2BMembershipIDVerification: Boolean
-  amlRiskLevel: AmlRiskLevel
   supportingDocumentSettings: SupportingDocumentSettings
 
   """
@@ -11562,11 +11561,6 @@ type Scheme {
 
 """Rejection returned when adding a B2B mandate with an Individual debtor"""
 type SchemeWrongRejection implements Rejection {
-  message: String!
-}
-
-type ScreeningNotFoundRejection implements Rejection {
-  id: ID!
   message: String!
 }
 

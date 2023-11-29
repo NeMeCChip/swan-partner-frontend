@@ -3257,8 +3257,8 @@ type Mutation {
   *This mutation is restricted to a Project access token ([Learn More](https://docs.swan.io/api/authentication))*
   """
   generateSupportingDocumentUploadUrl(input: GenerateSupportingDocumentUploadUrlInput!): GenerateSupportingDocumentUploadUrlPayload!
-  addSepaDirectDebitPaymentMandateFromPaymentLink(input: AddSepaDirectDebitPaymentMandateFromPaymentLinkInput!): AddSepaDirectDebitPaymentMandateFromPaymentLinkPayload
-  unauthenticatedInitiateMerchantSddPaymentCollectionFromPaymentLink(input: UnauthenticatedInitiateMerchantSddPaymentCollectionFromPaymentLinkInput!): UnauthenticatedInitiateMerchantSddPaymentCollectionFromPaymentLinkPayload
+  addSepaDirectDebitPaymentMandateFromPaymentLink(input: AddSepaDirectDebitPaymentMandateFromPaymentLinkInput!): AddSepaDirectDebitPaymentMandateFromPaymentLinkPayload!
+  unauthenticatedInitiateMerchantSddPaymentCollectionFromPaymentLink(input: UnauthenticatedInitiateMerchantSddPaymentCollectionFromPaymentLinkInput!): UnauthenticatedInitiateMerchantSddPaymentCollectionFromPaymentLinkPayload!
 }
 
 """
@@ -4594,11 +4594,6 @@ type RollingReserve {
 
 """Rejection returned when adding a B2B mandate with an Individual debtor"""
 type SchemeWrongRejection implements Rejection {
-  message: String!
-}
-
-type ScreeningNotFoundRejection implements Rejection {
-  id: ID!
   message: String!
 }
 
