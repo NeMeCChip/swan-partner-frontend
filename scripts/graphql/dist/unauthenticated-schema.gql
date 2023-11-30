@@ -4694,7 +4694,7 @@ input SepaPaymentMandateDebtorInput {
   name: String!
 
   """SEPA Direct Debit Payment Mandate debtor IBAN"""
-  IBAN: String!
+  iban: String!
   address: AddressInput!
 }
 
