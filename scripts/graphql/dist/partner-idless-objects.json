@@ -71,7 +71,6 @@
   "CancelDigitalCardSuccessPayload",
   "CanceledFundingSourceStatusInfo",
   "CanceledIdentificationLevelStatusInfo",
-  "CanceledMerchantPaymentLinkStatusInfo",
   "CanceledMerchantPaymentMethodStatusInfo",
   "CanceledMerchantProfileStatusInfo",
   "CanceledTransactionStatusInfo",

@@ -1039,13 +1039,6 @@ enum BusinessActivity {
   Transportation
 }
 
-type CanceledMerchantPaymentLinkStatusInfo implements MerchantPaymentLinkStatusInfo {
-  status: MerchantPaymentLinkStatus!
-
-  """The date at which the customer canceled the payment."""
-  canceledAt: DateTime!
-}
-
 """CanceledMerchantPaymentMethodStatusInfo"""
 type CanceledMerchantPaymentMethodStatusInfo implements MerchantPaymentMethodStatusInfo {
   status: MerchantPaymentMethodStatus!
@@ -1326,6 +1319,7 @@ input CardInfosInput {
   requestId: String
 }
 
+"""COMING SOON"""
 type CardMerchantPaymentMethod implements MerchantPaymentMethod {
   """
   Unique identifier tied to every version of a given Merchant Payment Method
@@ -4456,6 +4450,9 @@ type Query {
 
   """Return a merchant payment link by id"""
   merchantPaymentLink(id: ID!): MerchantPaymentLink
+
+  """Return the list of CCA3 non-EEA countries"""
+  nonEEACountries: [CCA3!]!
 }
 
 """Define a reason with a message"""

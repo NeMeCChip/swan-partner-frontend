@@ -34,7 +34,6 @@
   "ApprovedFundingLimit",
   "Authenticator",
   "BadRequestRejection",
-  "CanceledMerchantPaymentLinkStatusInfo",
   "CanceledMerchantPaymentMethodStatusInfo",
   "CanceledMerchantProfileStatusInfo",
   "CannotActivatePhysicalCardRejection",

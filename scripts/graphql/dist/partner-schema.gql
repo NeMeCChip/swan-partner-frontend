@@ -2105,13 +2105,6 @@ type CanceledIdentificationLevelStatusInfo {
   status: SwanIdentificationStatus!
 }
 
-type CanceledMerchantPaymentLinkStatusInfo implements MerchantPaymentLinkStatusInfo {
-  status: MerchantPaymentLinkStatus!
-
-  """The date at which the customer canceled the payment."""
-  canceledAt: DateTime!
-}
-
 """CanceledMerchantPaymentMethodStatusInfo"""
 type CanceledMerchantPaymentMethodStatusInfo implements MerchantPaymentMethodStatusInfo {
   status: MerchantPaymentMethodStatus!
@@ -2833,6 +2826,7 @@ input CardFiltersInput {
   accountId: String
 }
 
+"""COMING SOON"""
 type CardMerchantPaymentMethod implements MerchantPaymentMethod {
   """
   Unique identifier tied to every version of a given Merchant Payment Method
@@ -2879,12 +2873,6 @@ enum CardOrderByFieldInput {
 input CardOrderByInput {
   field: CardOrderByFieldInput
   direction: OrderByDirection
-}
-
-"""input for Card payment method"""
-input CardPaymentMethodInput {
-  """If true, the Payment Method will be in Pending Review"""
-  activate: Boolean = false
 }
 
 """when the card is in the process of being ready to use"""
@@ -6878,7 +6866,7 @@ input InternationalBeneficiaryInput {
 
   """
   *COMING SOON*
-  Route that Wise will use to transfer the funds
+  Route that Swan will use to transfer the funds
   """
   route: InternationalCreditTransferRouteInput!
 }
@@ -6977,7 +6965,7 @@ type InternationalCreditTransferOutCreditor {
   """Account holder name"""
   name: String!
 
-  """Route that Wise will use to transfer the funds"""
+  """Route that Swan will use to transfer the funds"""
   route: InternationalCreditTransferRoute!
 }
 
@@ -7070,6 +7058,9 @@ enum InternationalCreditTransferRoute {
 
   """Israeli local route"""
   IsraeliLocal
+
+  """Japanese local route"""
+  Japanese
 
   """Kenyan local route"""
   KenyaLocal
@@ -7198,6 +7189,9 @@ enum InternationalCreditTransferRouteInput {
 
   """Israeli local route"""
   IsraeliLocal
+
+  """Japanese local route"""
+  Japanese
 
   """Kenyan local route"""
   KenyaLocal
@@ -7563,6 +7557,7 @@ type LegalDocumentInactiveStatusInfo implements LegalDocumentStatusInfo {
 
 input LegalDocumentsFilterInput {
   status: LegalDocumentStatus
+  type: LegalDocumentType
 }
 
 enum LegalDocumentStatus {
@@ -7617,6 +7612,8 @@ enum MandateLanguage {
   it
   nl
   es
+  pt
+  fi
 }
 
 input MembershipInfoInput {
@@ -8079,9 +8076,6 @@ type MerchantPaymentLink {
   If the array is empty Swan will allow all the payment methods that are enabled for the merchant profile (except for Check and Internal Direct Debit)
   """
   paymentMethods: [MerchantPaymentMethod!]!
-
-  """The Merchant Profile to link this Payment Link to"""
-  merchantProfileId: ID!
 }
 
 enum MerchantPaymentLinkStatus {
@@ -11251,9 +11245,6 @@ input RequestMerchantPaymentMethodsInput {
 
   """Input for Check payment method"""
   check: CheckPaymentMethodInput
-
-  """input for Card payment method"""
-  card: CardPaymentMethodInput
 }
 
 union RequestMerchantPaymentMethodsPayload = RequestMerchantPaymentMethodsSuccessPayload | ForbiddenRejection | NotFoundRejection | InternalErrorRejection | ValidationRejection
